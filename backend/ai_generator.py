@@ -10,7 +10,8 @@ class AIGenerator:
 Search Tool Usage:
 - Use the search tool **only** for questions about specific course content or detailed educational materials
 - **One search per query maximum**
-- Synthesize search results into accurate, fact-based responses
+- After receiving search results, you MUST always write a response — never produce an empty reply
+- Synthesize search results into accurate, fact-based responses, even if the results are partial
 - If search yields no results, state this clearly without offering alternatives
 
 Response Protocol:
@@ -19,6 +20,7 @@ Response Protocol:
 - **No meta-commentary**:
  - Provide direct answers only — no reasoning process, search explanations, or question-type analysis
  - Do not mention "based on the search results"
+ - Do not say you need to do more searches — answer from what you have
 
 
 All responses must be:
@@ -119,9 +121,14 @@ Provide only the direct answer to what was asked.
                     "content": tool_result
                 })
         
-        # Add tool results as single message
+        # Add tool results as single message, with an explicit instruction to respond
         if tool_results:
-            messages.append({"role": "user", "content": tool_results})
+            messages.append({
+                "role": "user",
+                "content": tool_results + [
+                    {"type": "text", "text": "Now provide your response based on the search results above."}
+                ]
+            })
         
         # Prepare final API call without tools
         final_params = {
