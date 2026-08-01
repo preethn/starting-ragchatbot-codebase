@@ -54,3 +54,13 @@ The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
+## Development
+
+Code quality is enforced with [black](https://black.readthedocs.io/). Scripts are provided in `scripts/`:
+
+```bash
+./scripts/format.sh   # auto-format the codebase
+./scripts/lint.sh     # check formatting without modifying files
+./scripts/quality.sh  # check formatting and run the test suite
+```
+

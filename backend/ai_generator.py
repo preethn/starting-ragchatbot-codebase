@@ -1,6 +1,7 @@
 import anthropic
 from typing import List, Optional
 
+
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
 
@@ -36,16 +37,15 @@ Provide only the direct answer to what was asked.
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
 
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
 
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
         Supports up to MAX_TOOL_ROUNDS sequential tool-calling rounds.
@@ -62,7 +62,7 @@ Provide only the direct answer to what was asked.
         api_params = {
             **self.base_params,
             "messages": messages,
-            "system": system_content
+            "system": system_content,
         }
 
         if tools:
@@ -72,7 +72,11 @@ Provide only the direct answer to what was asked.
         response = self.client.messages.create(**api_params)
 
         round_count = 0
-        while response.stop_reason == "tool_use" and tool_manager and round_count < self.MAX_TOOL_ROUNDS:
+        while (
+            response.stop_reason == "tool_use"
+            and tool_manager
+            and round_count < self.MAX_TOOL_ROUNDS
+        ):
             try:
                 messages = self._execute_tool_round(response, messages, tool_manager)
             except Exception:
@@ -87,14 +91,14 @@ Provide only the direct answer to what was asked.
                     "messages": messages,
                     "system": system_content,
                     "tools": tools,
-                    "tool_choice": {"type": "auto"}
+                    "tool_choice": {"type": "auto"},
                 }
             else:
                 # Rounds exhausted — strip tools to force a prose response
                 next_params = {
                     **self.base_params,
                     "messages": messages,
-                    "system": system_content
+                    "system": system_content,
                 }
 
             response = self.client.messages.create(**next_params)
@@ -117,20 +121,27 @@ Provide only the direct answer to what was asked.
         for content_block in response.content:
             if content_block.type == "tool_use":
                 tool_result = tool_manager.execute_tool(
-                    content_block.name,
-                    **content_block.input
+                    content_block.name, **content_block.input
                 )
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": content_block.id,
-                    "content": tool_result
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": content_block.id,
+                        "content": tool_result,
+                    }
+                )
 
-        messages.append({
-            "role": "user",
-            "content": tool_results + [
-                {"type": "text", "text": "Now provide your response based on the search results above."}
-            ]
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": tool_results
+                + [
+                    {
+                        "type": "text",
+                        "text": "Now provide your response based on the search results above.",
+                    }
+                ],
+            }
+        )
 
         return messages
